@@ -1019,6 +1019,13 @@ body {
   text-align: center;
 }
 
+.btn-tiny {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  flex: 1;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .projects-grid {
     grid-template-columns: 1fr;
