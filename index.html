@@ -44,7 +44,7 @@
           <p class="hero-subtitle">ML Engineer • Full-Stack Developer • Systems Architect</p>
           <p class="hero-description">I design and deploy end-to-end machine learning systems. From model development and optimization to scalable inference pipelines, CI/CD automation, and production monitoring ,I deliver reliable, measurable impact.</p>
           <div class="hero-ctas">
-            <a href="resume.pdf" class="btn btn-primary">Resume</a>
+            <button class="btn btn-primary" onclick="openResumeModal()">Resume</button>
             <a href="#projects" class="btn btn-secondary">Explore Projects</a>
           </div>
         </div>
@@ -329,7 +329,7 @@
         <a href="mailto:senthilbala2018@gmail.com" class="social-link" title="Email" aria-label="Send email">✉️</a>
         <a href="https://github.com/Balakumar-003" target="_blank" rel="noopener" class="social-link" title="GitHub" aria-label="Visit GitHub">🔗</a>
         <a href="https://www.linkedin.com/in/balakumar-s-638753298/" target="_blank" rel="noopener" class="social-link" title="LinkedIn" aria-label="Visit LinkedIn">💼</a>
-        <a href="resume.pdf" target="_blank" rel="noopener" class="social-link" title="Resume" aria-label="Download Resume">📄</a>
+        <button class="social-link" onclick="openResumeModal()" title="View Resume" aria-label="View Resume">📄</button>
       </div>
 
       <!-- Contact Form -->
@@ -351,6 +351,23 @@
     </div>
   </section>
 
+  <!-- Resume Modal -->
+  <div id="resumeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>My Resume</h2>
+        <button class="modal-close" onclick="closeResumeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <iframe id="resumeFrame" src="images/resume.pdf" style="width: 100%; height: 600px; border: none; border-radius: 8px;"></iframe>
+      </div>
+      <div class="modal-footer">
+        <a href="images/resume.pdf" download class="btn btn-primary">Download Resume</a>
+        <a href="images/resume.pdf" target="_blank" rel="noopener" class="btn btn-secondary">Open in New Tab</a>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer>
     <p>&copy; <span id="year"></span> Balakumar S • ML & Software Engineer | <a href="#top">Back to top</a></p>
@@ -358,5 +375,25 @@
 
   <!-- Scripts -->
   <script src="js/main.js"></script>
+  <script>
+    function openResumeModal() {
+      document.getElementById('resumeModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeResumeModal() {
+      document.getElementById('resumeModal').style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('resumeModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+          closeResumeModal();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
