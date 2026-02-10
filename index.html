@@ -9,6 +9,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <!-- PDF.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    #pdfContainer {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+    }
+    .pdf-page {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .pdf-page canvas {
+      max-width: 100%;
+      border: 1px solid rgba(0, 153, 255, 0.2);
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
   <!-- Animated Background -->
@@ -358,8 +377,8 @@
         <h2>My Resume</h2>
         <button class="modal-close" onclick="closeResumeModal()">&times;</button>
       </div>
-      <div class="modal-body">
-        <iframe id="resumeFrame" src="https://docs.google.com/gview?url=https://balakumar-portfolio.vercel.app/resume.pdf&embedded=true" style="width: 100%; height: 700px; border: none; border-radius: 8px;"></iframe>
+      <div class="modal-body" id="pdfContainer" style="overflow-y: auto;">
+        <div id="pdf-viewer" style="width: 100%;"></div>
       </div>
       <div class="modal-footer">
         <a href="/resume.pdf" download class="btn btn-primary">Download Resume</a>
@@ -376,9 +395,62 @@
   <!-- Scripts -->
   <script src="js/main.js"></script>
   <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    
+    let pdfDoc = null;
+    let pageNum = 1;
+    let pageRendering = false;
+    let pageNumPending = null;
+    let currentScale = 1.5;
+
+    function renderPage(num) {
+      pageRendering = true;
+      pdfDoc.getPage(num).then(function(page) {
+        const viewport = page.getViewport({scale: currentScale});
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport
+        };
+        
+        page.render(renderContext).promise.then(function() {
+          pageRendering = false;
+          const pageDiv = document.createElement('div');
+          pageDiv.className = 'pdf-page';
+          pageDiv.appendChild(canvas);
+          document.getElementById('pdf-viewer').appendChild(pageDiv);
+          
+          if (pageNumPending !== null) {
+            renderPage(pageNumPending);
+            pageNumPending = null;
+          }
+        });
+      });
+    }
+
     function openResumeModal() {
       document.getElementById('resumeModal').style.display = 'flex';
       document.body.style.overflow = 'hidden';
+      
+      // Load and render PDF if not already loaded
+      if (!pdfDoc) {
+        pdfjsLib.getDocument('/resume.pdf').promise.then(function(pdf) {
+          pdfDoc = pdf;
+          document.getElementById('pdf-viewer').innerHTML = '';
+          
+          // Render all pages
+          for (let i = 1; i <= pdf.numPages; i++) {
+            renderPage(i);
+          }
+        }).catch(function(error) {
+          console.error('Error loading PDF:', error);
+          document.getElementById('pdf-viewer').innerHTML = '<p style="color: #ff006e; text-align: center; padding: 20px;">Error loading resume. Please download it directly.</p>';
+        });
+      }
     }
 
     function closeResumeModal() {
