@@ -14,7 +14,7 @@ export default function Hero(){
         <div className="actions">
           <a className="btn gradient" href="#projects">View Projects</a>
           <a className="btn outline" href="/resume.pdf" target="_blank" rel="noopener">View Resume</a>
-        </div>
+        </div
       </div>
     </section>
   )
