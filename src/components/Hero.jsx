@@ -38,7 +38,7 @@ export default function Hero(){
               <button className="modal-close" onClick={closeResume}>&times;</button>
             </div>
             <div className="modal-body">
-              <iframe src="/images/resume.pdf" style={{ width: '100%', height: '600px', border: 'none', borderRadius: '8px' }}></iframe>
+              <iframe src="https://docs.google.com/gview?url=https://balakumar-portfolio.vercel.app/images/resume.pdf&embedded=true" style={{ width: '100%', height: '700px', border: 'none', borderRadius: '8px' }}></iframe>
             </div>
             <div className="modal-footer">
               <a href="/images/resume.pdf" download className="btn btn-primary">Download Resume</a>
