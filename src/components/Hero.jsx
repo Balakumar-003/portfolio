@@ -1,103 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 
 export default function Hero(){
   const [showResume, setShowResume] = useState(false);
-  const [pdfDoc, setPdfDoc] = useState(null);
 
-  useEffect(() => {
-    // Load PDF.js from CDN
-    if (!window.pdfjsLib) {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-      script.onload = () => {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      };
-      document.body.appendChild(script);
-    }
-  }, []);
-
-  const openResume = () => {
-    setShowResume(true);
-  };
-
-  const closeResume = () => {
-    setShowResume(false);
-  };
+  const openResume = () => setShowResume(true);
+  const closeResume = () => setShowResume(false);
 
   const handleBackdropClick = (e) => {
     if (e.target.id === 'resumeModalBackdrop') {
       closeResume();
     }
   };
-
-  const renderPDF = () => {
-    if (!window.pdfjsLib) {
-      console.error('PDF.js not loaded yet');
-      return;
-    }
-
-    const pdfjsLib = window.pdfjsLib;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    
-    const viewer = document.getElementById('pdf-viewer-react');
-    if (!viewer) return;
-    
-    viewer.innerHTML = '<p style="color: #a8c5ff; text-align: center; padding: 20px;">Loading resume...</p>';
-    
-    pdfjsLib.getDocument('/resume.pdf').promise.then((pdf) => {
-      setPdfDoc(pdf);
-      viewer.innerHTML = '';
-      
-      let pageNum = 1;
-      
-      function renderNextPage() {
-        if (pageNum > pdf.numPages) {
-          return;
-        }
-        
-        pdf.getPage(pageNum).then((page) => {
-          const scale = 1.5;
-          const viewport = page.getViewport({ scale });
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-
-          page.render({
-            canvasContext: context,
-            viewport: viewport
-          }).promise.then(() => {
-            const pageDiv = document.createElement('div');
-            pageDiv.style.cssText = 'display: flex; justify-content: center; margin: 10px 0;';
-            pageDiv.appendChild(canvas);
-            viewer.appendChild(pageDiv);
-            
-            pageNum++;
-            renderNextPage();
-          }).catch((error) => {
-            console.error('Error rendering page:', error);
-            pageNum++;
-            renderNextPage();
-          });
-        }).catch((error) => {
-          console.error('Error getting page:', error);
-          pageNum++;
-          renderNextPage();
-        });
-      }
-      
-      renderNextPage();
-    }).catch((error) => {
-      console.error('Error loading PDF:', error);
-      viewer.innerHTML = '<p style="color: #ff006e; text-align: center; padding: 20px;">Error loading resume. <br>Please use the Download or Open buttons instead.</p>';
-    });
-  };
-
-  useEffect(() => {
-    if (showResume) {
-      renderPDF();
-    }
-  }, [showResume]);
 
   return (
     <>
@@ -124,8 +37,16 @@ export default function Hero(){
               <h2>My Resume</h2>
               <button className="modal-close" onClick={closeResume}>&times;</button>
             </div>
-            <div className="modal-body" id="pdfContainer" style={{ overflowY: 'auto' }}>
-              <div id="pdf-viewer-react"></div>
+            <div className="modal-body">
+              <object data="/resume.pdf" type="application/pdf" width="100%" height="700px" style={{ borderRadius: '8px' }}>
+                <p>
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d9ff'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z'/%3E%3C/svg%3E" style={{ width: '100px', height: '100px', display: 'block', margin: '20px auto' }}/>
+                  <p style={{ color: '#a8c5ff', textAlign: 'center', padding: '20px' }}>
+                    PDF preview is not available in your browser.<br/>
+                    <strong>Please use the buttons below to download or view the resume.</strong>
+                  </p>
+                </p>
+              </object>
             </div>
             <div className="modal-footer">
               <a href="/resume.pdf" download className="btn btn-primary">Download Resume</a>

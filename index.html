@@ -9,25 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-  <!-- PDF.js Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <style>
-    #pdfContainer {
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-    }
-    .pdf-page {
-      display: flex;
-      justify-content: center;
-      margin: 10px 0;
-    }
-    .pdf-page canvas {
-      max-width: 100%;
-      border: 1px solid rgba(0, 153, 255, 0.2);
-      border-radius: 4px;
-    }
-  </style>
 </head>
 <body>
   <!-- Animated Background -->
@@ -377,8 +358,16 @@
         <h2>My Resume</h2>
         <button class="modal-close" onclick="closeResumeModal()">&times;</button>
       </div>
-      <div class="modal-body" id="pdfContainer" style="overflow-y: auto;">
-        <div id="pdf-viewer" style="width: 100%;"></div>
+      <div class="modal-body">
+        <object data="/resume.pdf" type="application/pdf" width="100%" height="700px" style="border-radius: 8px;">
+          <p>
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d9ff'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z'/%3E%3C/svg%3E" style="width: 100px; height: 100px; display: block; margin: 20px auto;"/>
+            <p style="color: #a8c5ff; text-align: center; padding: 20px;">
+              PDF preview is not available in your browser.<br/>
+              <strong>Please use the buttons below to download or view the resume.</strong>
+            </p>
+          </p>
+        </object>
       </div>
       <div class="modal-footer">
         <a href="/resume.pdf" download class="btn btn-primary">Download Resume</a>
@@ -395,84 +384,9 @@
   <!-- Scripts -->
   <script src="js/main.js"></script>
   <script>
-    // Initialize PDF.js worker
-    if (typeof pdfjsLib !== 'undefined') {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    }
-    
-    let pdfDoc = null;
-    let currentScale = 1.5;
-
-    function renderAllPages(pdf) {
-      const viewer = document.getElementById('pdf-viewer');
-      viewer.innerHTML = '';
-      
-      // Render pages sequentially
-      let pageNum = 1;
-      
-      function renderNextPage() {
-        if (pageNum > pdf.numPages) {
-          return; // All pages rendered
-        }
-        
-        pdf.getPage(pageNum).then(function(page) {
-          const viewport = page.getViewport({ scale: currentScale });
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-
-          const renderContext = {
-            canvasContext: context,
-            viewport: viewport
-          };
-          
-          page.render(renderContext).promise.then(function() {
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'pdf-page';
-            pageDiv.appendChild(canvas);
-            viewer.appendChild(pageDiv);
-            
-            pageNum++;
-            renderNextPage(); // Render next page
-          }).catch(function(error) {
-            console.error('Error rendering page ' + pageNum + ':', error);
-            pageNum++;
-            renderNextPage();
-          });
-        }).catch(function(error) {
-          console.error('Error getting page ' + pageNum + ':', error);
-          pageNum++;
-          renderNextPage();
-        });
-      }
-      
-      renderNextPage();
-    }
-
     function openResumeModal() {
-      const modal = document.getElementById('resumeModal');
-      modal.style.display = 'flex';
+      document.getElementById('resumeModal').style.display = 'flex';
       document.body.style.overflow = 'hidden';
-      
-      // Load and render PDF if not already loaded
-      if (!pdfDoc) {
-        const viewer = document.getElementById('pdf-viewer');
-        viewer.innerHTML = '<p style="color: #a8c5ff; text-align: center; padding: 20px;">Loading resume...</p>';
-        
-        if (typeof pdfjsLib === 'undefined') {
-          viewer.innerHTML = '<p style="color: #ff006e; text-align: center; padding: 20px;">PDF library loading... Please wait a moment and try again.</p>';
-          return;
-        }
-        
-        pdfjsLib.getDocument('/resume.pdf').promise.then(function(pdf) {
-          pdfDoc = pdf;
-          renderAllPages(pdf);
-        }).catch(function(error) {
-          console.error('Error loading PDF:', error);
-          viewer.innerHTML = '<p style="color: #ff006e; text-align: center; padding: 20px;">Error loading resume. <br>Please use the Download or Open buttons instead.</p>';
-        });
-      }
     }
 
     function closeResumeModal() {
@@ -482,14 +396,11 @@
 
     // Close modal when clicking outside
     document.addEventListener('DOMContentLoaded', function() {
-      const modal = document.getElementById('resumeModal');
-      if (modal) {
-        modal.addEventListener('click', function(event) {
-          if (event.target === this) {
-            closeResumeModal();
-          }
-        });
-      }
+      document.getElementById('resumeModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+          closeResumeModal();
+        }
+      });
     });
   </script>
 </body>
