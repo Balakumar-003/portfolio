@@ -31,44 +31,66 @@ export default function Hero(){
   };
 
   const renderPDF = () => {
-    if (window.pdfjsLib && !pdfDoc) {
-      const pdfjsLib = window.pdfjsLib;
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      
-      pdfjsLib.getDocument('/resume.pdf').promise.then((pdf) => {
-        setPdfDoc(pdf);
-        renderAllPages(pdf);
-      }).catch((error) => {
-        console.error('Error loading PDF:', error);
-      });
+    if (!window.pdfjsLib) {
+      console.error('PDF.js not loaded yet');
+      return;
     }
-  };
 
-  const renderAllPages = (pdf) => {
+    const pdfjsLib = window.pdfjsLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    
     const viewer = document.getElementById('pdf-viewer-react');
     if (!viewer) return;
-    viewer.innerHTML = '';
     
-    for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
-      pdf.getPage(i).then((page) => {
-        const scale = 1.5;
-        const viewport = page.getViewport({ scale });
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+    viewer.innerHTML = '<p style="color: #a8c5ff; text-align: center; padding: 20px;">Loading resume...</p>';
+    
+    pdfjsLib.getDocument('/resume.pdf').promise.then((pdf) => {
+      setPdfDoc(pdf);
+      viewer.innerHTML = '';
+      
+      let pageNum = 1;
+      
+      function renderNextPage() {
+        if (pageNum > pdf.numPages) {
+          return;
+        }
+        
+        pdf.getPage(pageNum).then((page) => {
+          const scale = 1.5;
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
 
-        page.render({
-          canvasContext: context,
-          viewport: viewport
+          page.render({
+            canvasContext: context,
+            viewport: viewport
+          }).promise.then(() => {
+            const pageDiv = document.createElement('div');
+            pageDiv.style.cssText = 'display: flex; justify-content: center; margin: 10px 0;';
+            pageDiv.appendChild(canvas);
+            viewer.appendChild(pageDiv);
+            
+            pageNum++;
+            renderNextPage();
+          }).catch((error) => {
+            console.error('Error rendering page:', error);
+            pageNum++;
+            renderNextPage();
+          });
+        }).catch((error) => {
+          console.error('Error getting page:', error);
+          pageNum++;
+          renderNextPage();
         });
-
-        const pageDiv = document.createElement('div');
-        pageDiv.style.cssText = 'display: flex; justify-content: center; margin: 10px 0;';
-        pageDiv.appendChild(canvas);
-        viewer.appendChild(pageDiv);
-      });
-    }
+      }
+      
+      renderNextPage();
+    }).catch((error) => {
+      console.error('Error loading PDF:', error);
+      viewer.innerHTML = '<p style="color: #ff006e; text-align: center; padding: 20px;">Error loading resume. <br>Please use the Download or Open buttons instead.</p>';
+    });
   };
 
   useEffect(() => {

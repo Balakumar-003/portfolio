@@ -395,60 +395,82 @@
   <!-- Scripts -->
   <script src="js/main.js"></script>
   <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    // Initialize PDF.js worker
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
     
     let pdfDoc = null;
-    let pageNum = 1;
-    let pageRendering = false;
-    let pageNumPending = null;
     let currentScale = 1.5;
 
-    function renderPage(num) {
-      pageRendering = true;
-      pdfDoc.getPage(num).then(function(page) {
-        const viewport = page.getViewport({scale: currentScale});
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderContext = {
-          canvasContext: context,
-          viewport: viewport
-        };
+    function renderAllPages(pdf) {
+      const viewer = document.getElementById('pdf-viewer');
+      viewer.innerHTML = '';
+      
+      // Render pages sequentially
+      let pageNum = 1;
+      
+      function renderNextPage() {
+        if (pageNum > pdf.numPages) {
+          return; // All pages rendered
+        }
         
-        page.render(renderContext).promise.then(function() {
-          pageRendering = false;
-          const pageDiv = document.createElement('div');
-          pageDiv.className = 'pdf-page';
-          pageDiv.appendChild(canvas);
-          document.getElementById('pdf-viewer').appendChild(pageDiv);
+        pdf.getPage(pageNum).then(function(page) {
+          const viewport = page.getViewport({ scale: currentScale });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+          };
           
-          if (pageNumPending !== null) {
-            renderPage(pageNumPending);
-            pageNumPending = null;
-          }
+          page.render(renderContext).promise.then(function() {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'pdf-page';
+            pageDiv.appendChild(canvas);
+            viewer.appendChild(pageDiv);
+            
+            pageNum++;
+            renderNextPage(); // Render next page
+          }).catch(function(error) {
+            console.error('Error rendering page ' + pageNum + ':', error);
+            pageNum++;
+            renderNextPage();
+          });
+        }).catch(function(error) {
+          console.error('Error getting page ' + pageNum + ':', error);
+          pageNum++;
+          renderNextPage();
         });
-      });
+      }
+      
+      renderNextPage();
     }
 
     function openResumeModal() {
-      document.getElementById('resumeModal').style.display = 'flex';
+      const modal = document.getElementById('resumeModal');
+      modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
       
       // Load and render PDF if not already loaded
       if (!pdfDoc) {
+        const viewer = document.getElementById('pdf-viewer');
+        viewer.innerHTML = '<p style="color: #a8c5ff; text-align: center; padding: 20px;">Loading resume...</p>';
+        
+        if (typeof pdfjsLib === 'undefined') {
+          viewer.innerHTML = '<p style="color: #ff006e; text-align: center; padding: 20px;">PDF library loading... Please wait a moment and try again.</p>';
+          return;
+        }
+        
         pdfjsLib.getDocument('/resume.pdf').promise.then(function(pdf) {
           pdfDoc = pdf;
-          document.getElementById('pdf-viewer').innerHTML = '';
-          
-          // Render all pages
-          for (let i = 1; i <= pdf.numPages; i++) {
-            renderPage(i);
-          }
+          renderAllPages(pdf);
         }).catch(function(error) {
           console.error('Error loading PDF:', error);
-          document.getElementById('pdf-viewer').innerHTML = '<p style="color: #ff006e; text-align: center; padding: 20px;">Error loading resume. Please download it directly.</p>';
+          viewer.innerHTML = '<p style="color: #ff006e; text-align: center; padding: 20px;">Error loading resume. <br>Please use the Download or Open buttons instead.</p>';
         });
       }
     }
@@ -460,11 +482,14 @@
 
     // Close modal when clicking outside
     document.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('resumeModal').addEventListener('click', function(event) {
-        if (event.target === this) {
-          closeResumeModal();
-        }
-      });
+      const modal = document.getElementById('resumeModal');
+      if (modal) {
+        modal.addEventListener('click', function(event) {
+          if (event.target === this) {
+            closeResumeModal();
+          }
+        });
+      }
     });
   </script>
 </body>
